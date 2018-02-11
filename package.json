@@ -1,0 +1,23 @@
+{
+  "name": "bamazon",
+  "version": "1.0.0",
+  "description": "shopping and inventory",
+  "main": "bamazonCustomer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Timster2938/Bamazon.git"
+  },
+  "author": "Tim Rugg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Timster2938/Bamazon/issues"
+  },
+  "homepage": "https://github.com/Timster2938/Bamazon#readme",
+  "dependencies": {
+    "inquirer": "^5.1.0",
+    "mysql": "^2.15.0"
+  }
+}
