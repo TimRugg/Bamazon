@@ -1,5 +1,6 @@
 const mySQL = require("mySQL");
 const inquirer = require("inquirer");
+const table = require("console.table");
 
 // display all products with ID, name, and product
 var connection = mySQL.createConnection({
@@ -10,30 +11,32 @@ var connection = mySQL.createConnection({
     database: 'bamazon_db' // optional but qualifying the table name in query would be required
 });
 
+// preferred connect from NPM documentation 
+connection.connect(function(error) {
+    if (error) {
+        console.error('error connecting: ', error.stack);
+        return;
+    }
+    console.log('connected as id: ', connection.threadId);
+});
+
 displayProducts(); // start by showing all products
 
 function displayProducts() {
-    // preferred connect from NPM documentation 
-    connection.connect(function(error) {
-        if (error) {
-            console.error('error connecting: ', error.stack);
-            return;
-        }
-        console.log('connected as id: ', connection.threadId);
-    });
+
+	var query = "Select item_id as 'ID', product_name as 'Product', price as 'Price' FROM products";
     // preferred query from NPM documentation
-    connection.query('SELECT * FROM products', function (error, results) {
+    connection.query(query, function (error, results) {
         if (error) {
             console.error('error with query: ', error.stack);
             return;
         }
-        // console.log(results);
-        // loop through results and display
+        // loop through results for list of IDs
         var listOfIDs=[]; // list of IDs to be used for validation
         for (var i=0; i<results.length; i++) {
-            console.log(`ID: ${results[i].item_id} | Name: ${results[i].product_name} | Price: $ ${results[i].price}`); // ES6 tic notation
-            listOfIDs.push(results[i].item_id);
+            listOfIDs.push(results[i].ID);
         };
+        console.table(results);
         // close connection
         // connection.end();
         // go to prompt
@@ -89,15 +92,13 @@ console.log(`ID: ${buyId} Qty: ${buyQty}`);
         var availableQty = results[0].stock_qty;
         if (availableQty < buyQty) {
             console.log(`Insufficient quantity available. Requested: ${buyQty} Available: ${availableQty}`);
-            return;
+            // return;
         } else {
             console.log("reduce inventory");
-            connection.query('UPDATE stock_qty ')
-        }
-        // loop through results and display
-        for (var i=0; i<results.length; i++) {
-            console.log(`ID: ${results[i].item_id} | Available: ${results[i].stock_qty} | Price: $ ${results[i].price}`); // ES6 tic notation
+            // connection.query('UPDATE stock_qty ')
         };
+        // start over
+        displayProducts();
     });
 
 };
