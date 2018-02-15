@@ -6,13 +6,13 @@ const table = require("console.table");
 var connection = mySQL.createConnection({
     host: 'localhost', // not needed - localhost is the default
     port: '3306',      // not needed - 3306 is the default
-    user: 'root', 
+    user: 'root',
     password: 'Umber33$',
     database: 'bamazon_db' // optional but qualifying the table name in query would be required
 });
 
 // preferred connect from NPM documentation 
-connection.connect(function(error) {
+connection.connect(function (error) {
     if (error) {
         console.error('error connecting: ', error.stack);
         return;
@@ -24,7 +24,7 @@ displayProducts(); // start by showing all products
 
 function displayProducts() {
 
-	var query = "Select item_id as 'ID', product_name as 'Product', price as 'Price' FROM products";
+    var query = "Select item_id as 'ID', product_name as 'Product', price as 'Price' FROM products WHERE stock_qty > 0";
     // preferred query from NPM documentation
     connection.query(query, function (error, results) {
         if (error) {
@@ -32,14 +32,13 @@ function displayProducts() {
             return;
         }
         // loop through results for list of IDs
-        var listOfIDs=[]; // list of IDs to be used for validation
-        for (var i=0; i<results.length; i++) {
+        var listOfIDs = []; // list of IDs to be used for validation
+        for (var i = 0; i < results.length; i++) {
             listOfIDs.push(results[i].ID);
         };
+        console.log("\n");
         console.table(results);
-        // close connection
-        // connection.end();
-        // go to prompt
+        // go to prompts
         customerBuy(listOfIDs);
     });
 };
@@ -51,38 +50,34 @@ function customerBuy(listOfIDs) {
         {
             type: "input",
             name: "buyId",
-            message: "What product do you want to buy? (Use ID number.)",
-            validate: function(value) {
+            message: "What product would you like to buy? (use ID)",
+            validate: function (value) {
                 var valid = listOfIDs.indexOf(value) > -1; // return true if input ID is in list of IDs
                 return valid || 'Please enter a valid ID.';
             },
-            filter: Number   
+            filter: Number
         },
         {
             type: "input",
             name: "buyQty",
             message: "How many?",
-            validate: function(value) {
+            validate: function (value) {
                 var valid = (!isNaN(parseFloat(value))) && (parseFloat(value) > 0);
                 return valid || 'Please enter a number.';
-                },
+            },
             filter: Number
         }
     ];
     // using questions array to prompt user
-    inquirer.prompt(questions).then(function(answers) {
-        // console.log(answers);
+    inquirer.prompt(questions).then(function (answers) {
+        // send id and qty to be checked and updated
         checkInventory(answers.buyId, answers.buyQty)
     });
 };
 
-// check inventory against how many
+// check inventory against how many and update
 function checkInventory(buyId, buyQty) {
-console.log(`ID: ${buyId} Qty: ${buyQty}`);
-// if not enough - display message and start over
-
-// if enough - deduct from stock qty and show total of purchase
-
+    // query for all fields
     // preferred query from NPM documentation
     connection.query(`SELECT * FROM products WHERE item_id = ${buyId}`, function (error, results) {
         if (error) {
@@ -90,15 +85,42 @@ console.log(`ID: ${buyId} Qty: ${buyQty}`);
             return;
         }
         var availableQty = results[0].stock_qty;
+        // if not enough - display message and start over
         if (availableQty < buyQty) {
-            console.log(`Insufficient quantity available. Requested: ${buyQty} Available: ${availableQty}`);
-            // return;
+            console.log(`\nInsufficient quantity available. Requested: ${buyQty} Available: ${availableQty}\n`);
+            buyMoreQuestion();
         } else {
-            console.log("reduce inventory");
-            // connection.query('UPDATE stock_qty ')
+            var totalCost = results[0].price * buyQty;
+            var newQty = availableQty - buyQty;
+            // if enough - deduct from stock qty and show total of purchase
+            connection.query('UPDATE products SET ? WHERE ?', [{
+                stock_qty: newQty
+            }, {
+                item_id: buyId
+            }], function (err, res) {
+                console.log(`\nYour purchase was successful. Total cost \$${totalCost}\n`);
+                buyMoreQuestion();
+            });
         };
-        // start over
-        displayProducts();
     });
+};
 
+function buyMoreQuestion() {
+    // ask to continue
+    var questions = [
+        {
+            type: "confirm",
+            name: "continue",
+            message: "Do you want to buy something else?"
+        }
+    ];
+    // using questions array to prompt user
+    inquirer.prompt(questions).then(function (answers) {
+        if (answers.continue) {
+            displayProducts();
+        } else {
+            connection.end();
+            return;
+        }
+    });
 };
