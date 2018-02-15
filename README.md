@@ -3,6 +3,9 @@ Shopping and inventory app
 
 ![Bamazon - like Amazon but smaller.](/images/Bamazon.png)
 
+##Video 
+![Bamazon - like Amazon but smaller.](/video/Bamazon.mp4)
+
 ## Description
 * Demonstrate use of SQL in Node.js.
 
